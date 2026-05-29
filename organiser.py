@@ -1,55 +1,37 @@
 import os
 import shutil
 from pathlib import Path
-
-# Define file type categories
-FILE_TYPES = {
-    "images":    [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"],
-    "documents": [".pdf", ".docx", ".doc", ".txt", ".xlsx", ".pptx", ".csv"],
-    "videos":    [".mp4", ".mkv", ".mov", ".avi", ".wmv"],
-    "audio":     [".mp3", ".wav", ".aac", ".flac", ".ogg"],
-    "code":      [".py", ".js", ".html", ".css", ".java", ".cpp", ".ts"],
-    "others":    []
-}
-
+file_types={"docs":['.docx','.xlsx','.txt','.pptx','.doc','.pdf','.csv'],
+            "images":['.jpg','.jpeg','.png','.gif','.webp','.avif','.svg','.tiff','.tif'],
+            "videos":['.mp4','.mov','.mkv','.avi','webm','.m4v'],
+            "audios":['.mp3','.m4a','.aac','.ogg','.wav','.aiff','.aif','.flac','.alac'],
+            "code":['.py','.js','.cpp','.cc','.java','.c'],
+            "others":[]}
 def get_category(extension):
-    for category, extensions in FILE_TYPES.items():
-        if extension.lower() in extensions:
+    for category,type in file_types.items():
+        if extension in type:
             return category
     return "others"
 
-def organise_folder(folder_path):
-    folder = Path(folder_path)
-    
-    if not folder.exists():
-        print(f"Folder not found: {folder_path}")
+
+def organise_folder(folder):
+    folder_path=Path(folder)
+    skipped,moved=0,0
+    if folder_path.exists()==False:
+        print(f"Folder not found on {folder}")
         return
+    for file in folder_path.iterdir():
+        if file.is_dir() or file.name.startswith('.'):
+            skipped=skipped+1
+        else:
+            category=get_category(file.suffix)
+            new_path=folder_path/category
+            new_path.mkdir(exist_ok=True)
+            shutil.move(str(file),str(new_path))
+            moved=moved+1
+            print(f"moved {file.suffix} to /{category} folder")
+    print(f"{moved} files moved  and {skipped} files skipped")
 
-    moved = 0
-    skipped = 0
-
-    for file in folder.iterdir():
-        # Skip folders and hidden files
-        if file.is_dir() or file.name.startswith("."):
-            skipped += 1
-            continue
-
-        # Get category for this file
-        category = get_category(file.suffix)
-
-        # Create category subfolder if it doesn't exist
-        destination_folder = folder / category
-        destination_folder.mkdir(exist_ok=True)
-
-        # Move the file
-        destination = destination_folder / file.name
-        shutil.move(str(file), str(destination))
-        print(f"Moved: {file.name} → /{category}")
-        moved += 1
-
-    print(f"\nDone. {moved} files organised, {skipped} items skipped.")
-
-if __name__ == "__main__":
-    # Change this path to any folder you want to organise
-    target_folder = input("Enter the folder path to organise: ")
+if __name__=="__main__":
+    target_folder=input("Enter the path of folder which you want to organise: ")
     organise_folder(target_folder)
